@@ -2,8 +2,6 @@ from sqlalchemy import Column, String, Integer
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database.base import Base
-from pydantic import BaseModel, Field
-
 
 class User(Base):
     __tablename__ = 'user'

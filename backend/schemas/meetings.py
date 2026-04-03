@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 from pydantic import BaseModel, ConfigDict
+from typing import Optional
 
 
 class MeetingLocationSchema(BaseModel):
@@ -22,3 +23,12 @@ class MeetingSchema(BaseModel):
 class MeetingListSchema(BaseModel):
     meetings: List[MeetingSchema]
     count: int
+
+class MeetingUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    start_time: Optional[datetime] = None
+    duration: Optional[timedelta] = None
+
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None

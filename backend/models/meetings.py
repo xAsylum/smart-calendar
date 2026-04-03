@@ -7,14 +7,14 @@ from models.user import User
 class Meeting(Base):
     __tablename__ = 'meetings'
     id = Column(Integer,
-                primary_key=True)
+                primary_key=True, autoincrement=True)
 
     owner = Column(Integer,
                    ForeignKey(User.id),
                    nullable=False)
 
     name = Column(String(64),
-                  nullable=True)
+                  nullable=False)
 
     start_time = Column(DateTime,
                         nullable=False)
