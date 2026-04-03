@@ -5,7 +5,7 @@ load_dotenv()
 
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
-from routers import auth, friends
+from routers import auth, friends, meetings
 from database.base import get_db, Base, engine
 
 app = FastAPI()
@@ -23,6 +23,7 @@ app.add_middleware(
 )
 app.include_router(auth.router)
 app.include_router(friends.router)
+app.include_router(meetings.router)
 
 Base.metadata.create_all(bind=engine)
 @app.get("/test-db")

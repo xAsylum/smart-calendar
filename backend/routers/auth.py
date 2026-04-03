@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from database.base import get_db
-from models.user import Token, LoginRequest, RegisterRequest, User
+from models.user import User
+from schemas.auth import LoginRequestSchema, RegisterRequestSchema, TokenSchema
 from services.auth import create_access_token, authenticate_user, get_user
 
 router = APIRouter(
@@ -14,7 +15,7 @@ router = APIRouter(
 )
 
 @router.post("/login")
-async def login(login_data : LoginRequest, session: Session = Depends(get_db)):
+async def login(login_data : LoginRequestSchema, session: Session = Depends(get_db)):
     if not authenticate_user(login_data.username, login_data.password, session):
         raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -22,11 +23,11 @@ async def login(login_data : LoginRequest, session: Session = Depends(get_db)):
         headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(login_data.username)
-    return Token(access_token=access_token,token_type='bearer')
+    return TokenSchema(access_token=access_token, token_type='bearer')
 
 
 @router.post("/register")
-async def register(register_data: RegisterRequest, session: Session = Depends(get_db)):
+async def register(register_data: RegisterRequestSchema, session: Session = Depends(get_db)):
     if get_user(register_data.username, session):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -37,4 +38,4 @@ async def register(register_data: RegisterRequest, session: Session = Depends(ge
     session.add(new_account)
     session.commit()
     access_token = create_access_token(register_data.username)
-    return Token(access_token=access_token,token_type='bearer')
+    return TokenSchema(access_token=access_token, token_type='bearer')
