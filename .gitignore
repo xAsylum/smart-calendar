@@ -12,5 +12,8 @@ __pycache__/
 venv/
 .env/
 
+backend/.env
+backend/smart_calendar.db
+
 .DS_Store
 Thumbs.db
