@@ -5,21 +5,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="8dp"
     tools:context=".ui.calendar.CalendarFragment">
 
     <Button
         android:id="@+id/button_logout"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/logout"
-        android:layout_margin="8dp"
+        android:layout_marginTop="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <CalendarView
-        android:id="@+id/calendarView"
+    <com.prolificinteractive.materialcalendarview.MaterialCalendarView
+        android:id="@+id/customCalendarView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+
+        app:mcv_dateTextAppearance="@style/CalendarDateCustomText"
+        app:mcv_headerTextAppearance="@style/CalendarHeaderCustomText"
+        app:mcv_arrowColor="?attr/colorOnSurface"
+        app:mcv_selectionColor="?attr/colorPrimaryContainer"
+        app:mcv_showOtherDates="all"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/button_logout" />
@@ -28,14 +38,17 @@
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
+        android:layout_marginTop="12dp"
         android:background="?android:attr/listDivider"
-        app:layout_constraintTop_toBottomOf="@id/calendarView" />
+        app:layout_constraintTop_toBottomOf="@id/customCalendarView" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_meetings"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="8dp"
+        android:layout_marginTop="8dp"
+        android:clipToPadding="false"
+        android:paddingBottom="80dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

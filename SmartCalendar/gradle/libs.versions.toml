@@ -6,6 +6,7 @@ espressoCore = "3.5.1"
 appcompat = "1.6.1"
 material = "1.10.0"
 constraintlayout = "2.1.4"
+materialCalendarview = "1.4.3"
 navigationFragment = "2.6.0"
 navigationUi = "2.6.0"
 
@@ -16,6 +17,7 @@ espresso-core = { group = "androidx.test.espresso", name = "espresso-core", vers
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+material-calendarview = { module = "com.github.prolificinteractive:material-calendarview", version.ref = "materialCalendarview" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigationUi" }
 

@@ -3,26 +3,48 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/LoginFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
+        android:id="@+id/LoginFragment"
         android:name="com.example.smartcalendar.ui.auth.LoginFragment"
         android:label="@string/login_fragment_label"
         tools:layout="@layout/fragment_login">
 
         <action
             android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            app:destination="@id/CalendarFragment" />
     </fragment>
     <fragment
-        android:id="@+id/SecondFragment"
+        android:id="@+id/CalendarFragment"
         android:name="com.example.smartcalendar.ui.calendar.CalendarFragment"
         android:label="@string/calendar_fragment_label"
         tools:layout="@layout/fragment_calendar">
 
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            app:destination="@id/LoginFragment" />
+
+        <action
+            android:id="@+id/action_CalendarFragment_to_MeetingDetailFragment"
+            app:destination="@id/MeetingDetailFragment"
+            >
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/MeetingDetailFragment"
+        android:name="com.example.smartcalendar.ui.meeting.MeetingDetailFragment"
+        tools:layout="@layout/fragment_meeting_detail">
+
+        <action
+
+            android:id="@+id/action_MeetingDetailFragment_to_MeetingManagementFragment"
+            app:destination="@id/MeetingManagementFragment">
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/MeetingManagementFragment"
+        android:name="com.example.smartcalendar.ui.meeting.MeetingManagementFragment"
+        tools:layout="@layout/fragment_meeting_management">
     </fragment>
 </navigation>

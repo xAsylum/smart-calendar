@@ -7,5 +7,15 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
     <string name="logout">Logout</string>
+    <string name="meeting_detail_manage">Manage</string>
+    <string name="meeting_detail_name">Meeting name</string>
+    <string name="meeting_detail_type_message">Type message...</string>
+    <string name="meeting_management_manage">Manage meeting</string>
+    <string name="meeting_management_adress">Adress</string>
+    <string name="meeting_management_change_time">Change time</string>
+    <string name="save_changes">Save changes</string>
+    <string name="meeting_management_add_friend">+ Add friend</string>
+    <string name="meeting_members">Meeting members</string>
+    <string name="duration">Duration</string>
 
 </resources>
