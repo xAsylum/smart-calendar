@@ -30,7 +30,24 @@
             app:destination="@id/MeetingDetailFragment"
             >
         </action>
+        <action
+            android:id="@+id/action_CalendarFragment_to_MeetingManagementFragment"
+            app:destination="@id/MeetingManagementFragment" />
+
+        <action
+            android:id="@+id/action_CalendarFragment_to_FriendsFragment"
+            app:destination="@id/FriendsFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim" />
     </fragment>
+
+
+
+    <fragment
+    android:id="@+id/FriendsFragment"
+    android:name="com.example.smartcalendar.ui.friends.FriendsFragment"
+    android:label="Znajomi" />
+
     <fragment
         android:id="@+id/MeetingDetailFragment"
         android:name="com.example.smartcalendar.ui.meeting.MeetingDetailFragment"

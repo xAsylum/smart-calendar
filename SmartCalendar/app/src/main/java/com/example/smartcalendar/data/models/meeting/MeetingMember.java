@@ -1,4 +1,4 @@
-package com.example.smartcalendar.data.models;
+package com.example.smartcalendar.data.models.meeting;
 
 public class MeetingMember {
     private final int userId;

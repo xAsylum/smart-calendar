@@ -1,4 +1,5 @@
 from enum import member
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -15,7 +16,7 @@ router = APIRouter(
     prefix='/meetings'
 )
 
-@router.get('/', response_model=MeetingListSchema)
+@router.get('', response_model=MeetingListSchema)
 def get_meetings(user = Depends(get_current_user), session: Session = Depends(get_db)):
     meetings = (
         session.query(Meeting)
@@ -65,7 +66,7 @@ def get_meeting_location(meeting_id:int,
                             detail="This meeting has no location!")
     return location
 
-@router.post('/', response_model=MeetingSchema)
+@router.post('', response_model=MeetingSchema)
 def create_meeting(meeting_data : MeetingUpdateSchema,
                    user: User = Depends(get_current_user),
                    session: Session = Depends(get_db)):
@@ -124,3 +125,25 @@ def update_meeting(meeting_id: int,
     session.commit()
     session.refresh(meeting)
     return meeting
+
+
+@router.post('/{meeting_id}/members')
+def update_meeting_members(meeting_id: int,
+                           member_ids: List[int],
+                           user: User = Depends(get_current_user),
+                           session: Session = Depends(get_db)):
+    meeting = session.query(Meeting).filter_by(id=meeting_id).first()
+    if not meeting or meeting.owner != user.id:
+        raise HTTPException(status_code=403, detail="Only owner can manage members")
+
+    session.query(MeetingMembers).filter_by(meeting_id=meeting_id).delete()
+
+    if user.id not in member_ids:
+        member_ids.append(user.id)
+
+    for m_id in member_ids:
+        new_member = MeetingMembers(meeting_id=meeting_id, member_id=m_id)
+        session.add(new_member)
+
+    session.commit()
+    return {"message": "Members updated successfully"}

@@ -100,7 +100,31 @@ def cancel_friend_request(friend_id: int,
     session.commit()
     return {"message": "Request cancelled successfully."}
 
-@router.get('/', response_model=FriendListSchema)
+
+@router.get('/requests/sent')
+def get_sent_requests(user: User = Depends(get_current_user), session: Session = Depends(get_db)):
+    requests = (session.query(FriendRequest, User)
+                .join(User, FriendRequest.request_to == User.id)
+                .filter(FriendRequest.request_from == user.id)
+                .all())
+    return {"requests": [{"id": rel.request_to, "username": receiver.username} for (rel, receiver) in requests]}
+
+@router.post('/requests/{sender_id}/accept')
+def accept_request_endpoint(sender_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)):
+    return accept_friend_request(sender_id, user, session)
+
+@router.post('/requests/{sender_id}/reject')
+def reject_friend_request(sender_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)):
+    db_request = (session.query(FriendRequest)
+                  .filter_by(request_from=sender_id, request_to=user.id)
+                  .first())
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    session.delete(db_request)
+    session.commit()
+    return {"message": "Request rejected"}
+
+@router.get('', response_model=FriendListSchema)
 def get_friends(user: User = Depends(get_current_user),
                 session: Session = Depends(get_db)):
     # Join the Friend table with User table to get the actual friend details

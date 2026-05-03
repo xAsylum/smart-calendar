@@ -7,9 +7,9 @@ from typing import Optional
 
 class MeetingLocationSchema(BaseModel):
     meeting_id: int
-    latitude: float
-    longitude: float
-    address: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address: Optional[str] = None
 
 class MeetingSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)

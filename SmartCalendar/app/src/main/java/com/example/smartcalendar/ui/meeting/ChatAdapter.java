@@ -15,6 +15,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     public ChatAdapter(List<String> messages) { this.messages = messages; }
 
+    public void setMessages(List<String> newMessages) {
+        this.messages = newMessages;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

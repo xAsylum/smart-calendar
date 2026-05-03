@@ -7,7 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.smartcalendar.R;
-import com.example.smartcalendar.data.models.Meeting;
+import com.example.smartcalendar.data.models.meeting.Meeting;
 import java.util.List;
 
 public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingViewHolder> {

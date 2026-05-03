@@ -12,8 +12,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
-import com.example.smartcalendar.data.models.Meeting;
-import com.example.smartcalendar.data.models.MeetingMember;
+import com.example.smartcalendar.data.models.meeting.Meeting;
+import com.example.smartcalendar.data.models.meeting.MeetingMember;
 import com.example.smartcalendar.data.models.User;
 import com.example.smartcalendar.databinding.FragmentMeetingManagementBinding;
 import com.google.android.material.chip.Chip;
@@ -24,32 +24,42 @@ import com.google.android.material.timepicker.TimeFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class MeetingManagementFragment extends Fragment {
 
     private FragmentMeetingManagementBinding binding;
     private MeetingViewModel viewModel;
     private int meetingId;
+
+    // Trzymamy aktualne spotkanie w pamięci, aby przekazywać je do dialogów
+    private Meeting currentMeeting;
+    // Zabezpieczenie przed nadpisywaniem EditTextów podczas pisania
+    private boolean isInitialLoad = true;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentMeetingManagementBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
+    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         viewModel = new ViewModelProvider(requireActivity()).get(MeetingViewModel.class);
-
         meetingId = getArguments().getInt("meeting_id");
 
-        Meeting meeting = viewModel.getMeeting(meetingId);
+        // OBSERWATOR - Ładuje dane w tle, eliminuje IllegalStateException
+        viewModel.getMeetingLive(requireContext(), meetingId).observe(getViewLifecycleOwner(), meeting -> {
+            if (meeting != null) {
+                currentMeeting = meeting;
+                updateUI(meeting);
+            }
+        });
 
-        loadMeetingData(meeting);
-
-
+        // Zapisywanie zmian (tylko nazwa i adres wpisywane z palca)
         binding.btnSaveChanges.setOnClickListener(v -> {
             viewModel.updateMeeting(
+                    requireContext(),
                     meetingId,
                     binding.etEditName.getText().toString(),
                     binding.etEditAddress.getText().toString()
@@ -58,82 +68,101 @@ public class MeetingManagementFragment extends Fragment {
             Navigation.findNavController(view).popBackStack();
         });
 
-        binding.btnChangeTime.setOnClickListener(v -> showTimePicker());
+        binding.btnChangeTime.setOnClickListener(v -> {
+            if (currentMeeting != null) showTimePicker();
+        });
 
-        binding.btnChangeDuration.setOnClickListener(v -> showDurationPicker());
+        binding.btnChangeDuration.setOnClickListener(v -> {
+            if (currentMeeting != null) showDurationPicker();
+        });
 
-        binding.btnAddMember.setOnClickListener(v -> showAddMemberDialog());
+        binding.btnAddMember.setOnClickListener(v -> {
+            if (currentMeeting != null) showAddMemberDialog();
+        });
     }
 
-    private void showAddMemberDialog() {
-        List<User> allFriends = viewModel.getAvailableFriends();
-        Meeting meeting = viewModel.getMeeting(meetingId);
-        List<MeetingMember> currentMembers = meeting.getMembers();
-
-        String[] friendNames = new String[allFriends.size()];
-        boolean[] checkedItems = new boolean[allFriends.size()];
-
-        for (int i = 0; i < allFriends.size(); i++) {
-            User friend = allFriends.get(i);
-            friendNames[i] = friend.getUsername();
-
-            for (MeetingMember m : currentMembers) {
-                if (m.getUserId() == friend.getId()) {
-                    checkedItems[i] = true;
-                    break;
-                }
+    private void updateUI(Meeting meeting) {
+        // Wypełniamy EditTexty tylko przy pierwszym załadowaniu
+        if (isInitialLoad) {
+            binding.etEditName.setText(meeting.getName());
+            if (meeting.getLocation() != null) {
+                binding.etEditAddress.setText(meeting.getLocation().getAddress());
             }
+            isInitialLoad = false;
         }
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Meeting members")
-                .setMultiChoiceItems(friendNames, checkedItems, (dialog, which, isChecked) -> {
-                    checkedItems[which] = isChecked;
-                })
-                .setPositiveButton("Update", (dialog, which) -> {
-                    List<User> selectedUsers = new ArrayList<>();
-                    for (int i = 0; i < allFriends.size(); i++) {
-                        if (checkedItems[i]) {
-                            selectedUsers.add(allFriends.get(i));
-                        }
-                    }
+        // Zawsze aktualizujemy przyciski (reagują na akcje z okien dialogowych)
+        if (meeting.getStartTime() != null) {
+            String timePart = meeting.getStartTime().contains("T")
+                    ? meeting.getStartTime().split("T")[1].substring(0, 5)
+                    : meeting.getStartTime();
+            binding.btnChangeTime.setText("Time: " + timePart);
+        }
 
-                    updateMeetingMembers(selectedUsers);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
+        if (meeting.getDuration() != null) {
+            binding.btnChangeDuration.setText("Duration: " + meeting.getDuration());
+        }
 
-    private void updateMeetingMembers(List<User> newSelectedUsers) {
-        viewModel.setMeetingMembers(meetingId, newSelectedUsers);
-
+        // Automatyczne odświeżanie Chipy z uczestnikami
         binding.cgMembers.removeAllViews();
-        for (User user : newSelectedUsers) {
-            addMemberChip(new MeetingMember(user.getId(), user.getUsername()));
-        }
-    }
-
-    private void loadMeetingData(Meeting meeting) {
-        binding.etEditName.setText(meeting.getName());
-        if (meeting.getLocation() != null) {
-            binding.etEditAddress.setText(meeting.getLocation().getAddress());
-        }
-
         for (MeetingMember member : meeting.getMembers()) {
             addMemberChip(member);
         }
     }
 
-    private void addMemberChip(MeetingMember member) {
-        Chip chip = new Chip(getContext());
-        chip.setText(member.getUsername());
-        chip.setCloseIconVisible(true);
-        chip.setOnCloseIconClickListener(v -> {
-            binding.cgMembers.removeView(chip);
-        });
-        binding.cgMembers.addView(chip);
+    private void showAddMemberDialog() {
+        // Uruchamiamy pobieranie znajomych w osobnym wątku, aby nie blokować UI
+        // (na wypadek, gdyby getAvailableFriends() korzystało z bazy lokalnej)
+        new Thread(() -> {
+            List<User> allFriends = viewModel.getAvailableFriends();
+
+            if (!isAdded()) return; // Zabezpieczenie przed crashem, gdy fragment zostanie zamknięty
+
+            requireActivity().runOnUiThread(() -> {
+                List<MeetingMember> currentMembers = currentMeeting.getMembers();
+                String[] friendNames = new String[allFriends.size()];
+                boolean[] checkedItems = new boolean[allFriends.size()];
+
+                for (int i = 0; i < allFriends.size(); i++) {
+                    User friend = allFriends.get(i);
+                    friendNames[i] = friend.getUsername();
+
+                    for (MeetingMember m : currentMembers) {
+                        if (m.getUserId() == friend.getId()) {
+                            checkedItems[i] = true;
+                            break;
+                        }
+                    }
+                }
+
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Meeting members")
+                        .setMultiChoiceItems(friendNames, checkedItems, (dialog, which, isChecked) -> {
+                            checkedItems[which] = isChecked;
+                        })
+                        .setPositiveButton("Update", (dialog, which) -> {
+                            List<User> selectedUsers = new ArrayList<>();
+                            for (int i = 0; i < allFriends.size(); i++) {
+                                if (checkedItems[i]) {
+                                    selectedUsers.add(allFriends.get(i));
+                                }
+                            }
+                            // Aktualizujemy bazę.
+                            // UWAGA: Nie musimy już ręcznie manipulować Chipami, bo LiveData odświeży je w updateUI!
+                            viewModel.setMeetingMembers(requireContext(), meetingId, selectedUsers);
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }).start();
     }
 
+    private void addMemberChip(MeetingMember member) {
+        Chip chip = new Chip(requireContext());
+        chip.setText(member.getUsername());
+        chip.setCloseIconVisible(false);
+        binding.cgMembers.addView(chip);
+    }
 
     private void showTimePicker() {
         MaterialTimePicker picker = new MaterialTimePicker.Builder()
@@ -144,22 +173,27 @@ public class MeetingManagementFragment extends Fragment {
                 .build();
 
         picker.addOnPositiveButtonClickListener(v -> {
-            String newTime = String.format("%02d:%02d", picker.getHour(), picker.getMinute());
-            binding.btnChangeTime.setText("Time: " + newTime);
-            // viewModel.updateStartTime(meetingId, ...)
+            // Tylko aktualizujemy bazę. LiveData samo wywoła updateUI i zmieni tekst na przycisku!
+            viewModel.updateStartTime(requireContext(), meetingId, picker.getHour(), picker.getMinute());
         });
 
         picker.show(getParentFragmentManager(), "TIME_PICKER");
     }
 
     private void showDurationPicker() {
-        String[] durations = {"15 min", "30 min", "1 h", "2 h", "5 h"};
+        String[] durations = {"00:15:00", "00:30:00", "01:00:00", "02:00:00", "05:00:00"};
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Select meeting duration")
                 .setItems(durations, (dialog, which) -> {
-                    binding.btnChangeDuration.setText("Duration: " + durations[which]);
-                    // viewModel.updateDuration(meetingId, durations[which]);
+                    // Tylko aktualizujemy bazę. LiveData odświeży przycisk!
+                    viewModel.updateDuration(requireContext(), meetingId, durations[which]);
                 })
                 .show();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
