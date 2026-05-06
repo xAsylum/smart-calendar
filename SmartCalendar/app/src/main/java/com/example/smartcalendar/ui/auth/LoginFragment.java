@@ -50,6 +50,18 @@ public class LoginFragment extends Fragment {
             loginUser(username, password);
         });
 
+        binding.buttonRegister.setOnClickListener(v -> {
+            String username = binding.textboxUsername.getText().toString().trim();
+            String password = binding.textboxPassword.getText().toString().trim();
+
+            if (username.isEmpty() || password.isEmpty()) {
+                Toast.makeText(getContext(), "Input data", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            registerUser(username, password);
+        });
+
         return binding.getRoot();
 
     }
@@ -58,6 +70,29 @@ public class LoginFragment extends Fragment {
         LoginRequest request = new LoginRequest(user, pass);
 
         NetworkClient.getApiService().login(request).enqueue(new Callback<LoginResponse>() {
+            @Override
+            public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String token = response.body().getAccessToken();
+                    TokenManager.getInstance().saveToken(getContext(), token);
+                    Toast.makeText(getContext(), "Login successful!", Toast.LENGTH_SHORT).show();
+                    NavHostFragment.findNavController(LoginFragment.this)
+                            .navigate(R.id.action_FirstFragment_to_SecondFragment);
+                } else {
+                    Toast.makeText(getContext(), "Wrong username or password!", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<LoginResponse> call, Throwable t) {
+                Log.e("AUTH", "Błąd sieci: " + t.getMessage());
+            }
+        });
+    }
+
+    public void registerUser(String user, String pass) {
+        LoginRequest request = new LoginRequest(user, pass);
+        NetworkClient.getApiService().register(request).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {

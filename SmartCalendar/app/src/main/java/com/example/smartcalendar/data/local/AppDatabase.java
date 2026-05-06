@@ -9,7 +9,7 @@ import androidx.room.TypeConverters;
 
 import com.example.smartcalendar.data.models.meeting.Meeting;
 
-@Database(entities = {Meeting.class}, version = 1)
+@Database(entities = {Meeting.class}, version = 2)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;

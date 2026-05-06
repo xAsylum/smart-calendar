@@ -36,17 +36,15 @@
 
         <action
             android:id="@+id/action_CalendarFragment_to_FriendsFragment"
-            app:destination="@id/FriendsFragment"
-            app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim" />
+            app:destination="@id/FriendsFragment"/>
     </fragment>
 
 
 
     <fragment
-    android:id="@+id/FriendsFragment"
-    android:name="com.example.smartcalendar.ui.friends.FriendsFragment"
-    android:label="Znajomi" />
+        android:id="@+id/FriendsFragment"
+        android:name="com.example.smartcalendar.ui.friends.FriendsFragment"
+        android:label="Friends" />
 
     <fragment
         android:id="@+id/MeetingDetailFragment"

@@ -2,6 +2,7 @@ package com.example.smartcalendar.data.models.meeting;
 
 import androidx.room.Embedded;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
@@ -40,8 +41,11 @@ public class Meeting {
     @SerializedName("longitude")
     private Double apiLongitude;
 
-    private List<MeetingMember> members = new ArrayList<>();
-    private List<String> chatMessages = new ArrayList<>();
+    @Ignore
+    private transient List<MeetingMember> members = new ArrayList<>();
+    
+    @Ignore
+    private transient List<String> chatMessages = new ArrayList<>();
 
     public void syncApiFields() {
         if (location != null) {

@@ -34,8 +34,6 @@ public class CalendarFragment extends Fragment {
     private FragmentCalendarBinding binding;
     private MeetingAdapter adapter;
     private MeetingViewModel viewModel;
-
-    // Dane trzymane w pamięci dla płynności UI
     private final List<Meeting> currentDisplayedMeetings = new ArrayList<>();
     private Map<CalendarDay, List<Meeting>> allMeetingsMap = new HashMap<>();
 
@@ -70,7 +68,10 @@ public class CalendarFragment extends Fragment {
             Navigation.findNavController(view).navigate(R.id.action_SecondFragment_to_FirstFragment);
         });
 
-        // FAB: Tworzenie spotkania
+        binding.buttonFriends.setOnClickListener(v -> {
+            Navigation.findNavController(view).navigate(R.id.action_CalendarFragment_to_FriendsFragment);
+        });
+
         binding.fabAddMeeting.setOnClickListener(v -> {
             CalendarDay date = binding.customCalendarView.getSelectedDate();
             if (date == null) date = CalendarDay.today();

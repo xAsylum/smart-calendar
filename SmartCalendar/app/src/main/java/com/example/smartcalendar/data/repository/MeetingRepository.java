@@ -1,4 +1,3 @@
-
 package com.example.smartcalendar.data.repository;
 
 import android.content.Context;
@@ -9,8 +8,11 @@ import android.util.Log;
 import com.example.smartcalendar.data.local.AppDatabase;
 import com.example.smartcalendar.data.local.MeetingDao;
 import com.example.smartcalendar.data.local.TokenManager;
+import com.example.smartcalendar.data.models.friend.Friend;
 import com.example.smartcalendar.data.models.meeting.Meeting;
 import com.example.smartcalendar.data.models.meeting.MeetingListResponse;
+import com.example.smartcalendar.data.models.meeting.MeetingMember;
+import com.example.smartcalendar.data.models.meeting.MeetingMembersResponse;
 import com.example.smartcalendar.data.network.NetworkClient;
 import com.example.smartcalendar.ui.meeting.MeetingViewModel;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
@@ -21,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import androidx.lifecycle.LiveData;
-import androidx.room.Room;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -38,8 +39,8 @@ public class MeetingRepository {
     public static synchronized MeetingRepository getInstance(Context context) {
         if (instance == null) {
             instance = new MeetingRepository(context);
+            instance.fetchMeetingsFromServer(context);
         }
-        instance.fetchMeetingsFromServer(context);
         return instance;
     }
 
@@ -74,8 +75,6 @@ public class MeetingRepository {
     }
 
     public void addMeeting(Context context, Meeting meeting, MeetingViewModel.OnMeetingCreatedListener listener){
-        meetingDao.insertMeeting(meeting);
-
         String header = getAuthHeader(context);
         if (header == null) return;
         NetworkClient.getApiService().createMeeting(header, meeting).enqueue(new Callback<Meeting>() {
@@ -122,6 +121,67 @@ public class MeetingRepository {
         });
     }
 
+    public void fetchMeetingMembers(Context context, int meetingId, MembersLoadListener listener) {
+        String header = getAuthHeader(context);
+        if (header == null) return;
+
+        NetworkClient.getApiService().getMeetingMembers(header, meetingId).enqueue(new Callback<MeetingMembersResponse>() {
+            @Override
+            public void onResponse(Call<MeetingMembersResponse> call, Response<MeetingMembersResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<MeetingMember> memberIds = response.body().getMembers();
+                    
+                    FriendRepository.getInstance().getFriends(context, new FriendRepository.FriendsLoadListener() {
+                        @Override
+                        public void onSuccess(List<Friend> allFriends) {
+                            List<MeetingMember> members = new ArrayList<>(memberIds);
+                            if (listener != null) listener.onSuccess(members);
+                        }
+
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            if (listener != null) listener.onFailure(errorMessage);
+                        }
+                    });
+                } else {
+                    if (listener != null) listener.onFailure("Błąd serwera: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MeetingMembersResponse> call, Throwable t) {
+                if (listener != null) listener.onFailure(t.getMessage());
+            }
+        });
+    }
+
+    public void setMeetingMembers(Context context, int meetingId, List<Friend> selectedUsers, Runnable onSuccess) {
+        String header = getAuthHeader(context);
+        if (header == null) return;
+
+        List<Integer> memberIds = new ArrayList<>();
+        for (Friend user : selectedUsers) {
+            memberIds.add(user.getId());
+        }
+
+        NetworkClient.getApiService().updateMeetingMembers(header, meetingId, memberIds)
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        if (response.isSuccessful()) {
+                            Log.d("API", "Członkowie spotkania zaktualizowani.");
+                            if (onSuccess != null) onSuccess.run();
+                        } else {
+                            Log.e("API", "Błąd aktualizacji członków: " + response.code());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        Log.e("API", "Błąd połączenia", t);
+                    }
+                });
+    }
 
     public List<Meeting> getAllMeetings() {
         return meetingDao.getAllMeetings();
@@ -139,22 +199,8 @@ public class MeetingRepository {
         return meetingDao.getMeetingByIdLive(id);
     }
 
-
-    public Map<CalendarDay, List<Meeting>> getMeetingsGroupedByDate() {
-        Map<CalendarDay, List<Meeting>> map = new HashMap<>();
-        for (Meeting m : getAllMeetings()) {
-            try {
-                if (m.getStartTime() == null || !m.getStartTime().contains("T")) continue;
-                String[] dateParts = m.getStartTime().split("T")[0].split("-");
-                CalendarDay day = CalendarDay.from(
-                        Integer.parseInt(dateParts[0]),
-                        Integer.parseInt(dateParts[1]) - 1,
-                        Integer.parseInt(dateParts[2])
-                );
-                if (!map.containsKey(day)) map.put(day, new ArrayList<>());
-                map.get(day).add(m);
-            } catch (Exception e) { e.printStackTrace(); }
-        }
-        return map;
+    public interface MembersLoadListener {
+        void onSuccess(List<MeetingMember> members);
+        void onFailure(String error);
     }
 }

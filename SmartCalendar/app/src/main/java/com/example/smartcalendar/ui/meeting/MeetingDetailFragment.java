@@ -71,7 +71,7 @@ public class MeetingDetailFragment extends Fragment {
         binding.btnSend.setOnClickListener(v -> {
             String msgText = binding.etChatMessage.getText().toString().trim();
             if (!msgText.isEmpty()) {
-                viewModel.addChatMessage(requireContext(), meetingId, "Me: " + msgText);
+                //viewModel.addChatMessage(requireContext(), meetingId, "Me: " + msgText);
                 binding.etChatMessage.setText("");
             }
         });

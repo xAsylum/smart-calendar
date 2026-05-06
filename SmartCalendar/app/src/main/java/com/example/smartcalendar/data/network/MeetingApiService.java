@@ -7,6 +7,9 @@ import com.example.smartcalendar.data.models.auth.LoginRequest;
 import com.example.smartcalendar.data.models.auth.LoginResponse;
 import com.example.smartcalendar.data.models.meeting.Meeting;
 import com.example.smartcalendar.data.models.meeting.MeetingListResponse;
+import com.example.smartcalendar.data.models.meeting.MeetingMembersResponse;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -20,6 +23,8 @@ import retrofit2.http.Path;
 public interface MeetingApiService {
     @POST("auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
+    @POST("auth/register")
+    Call<LoginResponse> register(@Body LoginRequest request);
 
     @GET("meetings")
     Call<MeetingListResponse> getMeetings(@Header("Authorization") String token);
@@ -34,7 +39,19 @@ public interface MeetingApiService {
             @Body Meeting meeting
     );
 
-    // --- FRIENDS ---
+    @GET("meetings/{meeting_id}/members")
+    Call<MeetingMembersResponse> getMeetingMembers(
+            @Header("Authorization") String token,
+            @Path("meeting_id") int meetingId
+    );
+
+    @POST("meetings/{meeting_id}/members")
+    Call<Void> updateMeetingMembers(
+            @Header("Authorization") String token,
+            @Path("meeting_id") int meetingId,
+            @Body List<Integer> memberIds
+    );
+
     @GET("friends")
     Call<FriendListResponse> getFriends(@Header("Authorization") String token);
 

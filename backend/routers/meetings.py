@@ -1,3 +1,4 @@
+import json
 from enum import member
 from typing import List
 
@@ -147,3 +148,16 @@ def update_meeting_members(meeting_id: int,
 
     session.commit()
     return {"message": "Members updated successfully"}
+
+
+@router.get('/{meeting_id}/members')
+def get_meeting_members(meeting_id: int,
+                           session: Session = Depends(get_db)):
+    members = (
+        session.query(MeetingMembers, User)
+        .join(User, MeetingMembers.member_id == User.id)
+        .filter(MeetingMembers.meeting_id == meeting_id)
+        .all()
+    )
+
+    return  {"members": [{"user_id": mm.member_id, "username": user.username} for mm, user in members], "count": len(members) }

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.util.Log;
 import com.example.smartcalendar.data.local.TokenManager;
 import com.example.smartcalendar.data.models.User;
+import com.example.smartcalendar.data.models.friend.Friend;
+import com.example.smartcalendar.data.models.friend.FriendListResponse;
 import com.example.smartcalendar.data.models.friendrequest.FriendRequestSchema;
 import com.example.smartcalendar.data.network.NetworkClient;
 
@@ -38,8 +40,32 @@ public class FriendRepository {
         NetworkClient.getApiService().acceptFriendRequest(getAuthHeader(context), userId)
                 .enqueue(new SimpleCallback(onResult));
     }
-    public List<User> getFriends() {
-        return null;
+
+    public interface FriendsLoadListener {
+        void onSuccess(List<Friend> friends);
+        void onFailure(String errorMessage);
+    }
+
+    public void getFriends(Context context, FriendsLoadListener listener) {
+        NetworkClient.getApiService().getFriends(getAuthHeader(context))
+                .enqueue(new Callback<FriendListResponse>() {
+                    @Override
+                    public void onResponse(Call<FriendListResponse> call, Response<FriendListResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            if (listener != null) {
+                                listener.onSuccess(response.body().getFriends());
+                            }
+                        } else {
+                            if (listener != null) listener.onFailure("Błąd serwera: " + response.code());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<FriendListResponse> call, Throwable t) {
+                        if (listener != null) listener.onFailure(t.getMessage());
+                        Log.e("API", "Błąd sieci przy pobieraniu znajomych", t);
+                    }
+                });
     }
     public void rejectRequest(Context context, int userId, Runnable onResult) {
         NetworkClient.getApiService().rejectFriendRequest(getAuthHeader(context), userId)
@@ -59,4 +85,9 @@ public class FriendRepository {
         @Override
         public void onFailure(Call<Void> call, Throwable t) { Log.e("API", "Friend action failed", t); }
     }
+
+    public void getAvailableFriends(Context context, FriendRepository.FriendsLoadListener listener) {
+        FriendRepository.getInstance().getFriends(context, listener);
+    }
+
 }
