@@ -15,12 +15,9 @@ import com.example.smartcalendar.data.models.meeting.MeetingMember;
 import com.example.smartcalendar.data.models.meeting.MeetingMembersResponse;
 import com.example.smartcalendar.data.network.NetworkClient;
 import com.example.smartcalendar.ui.meeting.MeetingViewModel;
-import com.prolificinteractive.materialcalendarview.CalendarDay;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import androidx.lifecycle.LiveData;
 import retrofit2.Call;
@@ -60,7 +57,9 @@ public class MeetingRepository {
                     List<Meeting> meetings = response.body().getMeetings();
 
                     new Thread(() -> {
+                        meetingDao.deleteAllMeetings();
                         for (Meeting m : meetings) {
+                            m.syncApiFields(); // Ensure latitude/longitude are synced from location object
                             meetingDao.insertMeeting(m);
                         }
                     }).start();
@@ -82,6 +81,7 @@ public class MeetingRepository {
             public void onResponse(Call<Meeting> call, Response<Meeting> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     Meeting serverMeeting = response.body();
+                    serverMeeting.syncApiFields();
 
                     new Thread(() -> {
                         meetingDao.insertMeeting(serverMeeting);
@@ -110,7 +110,9 @@ public class MeetingRepository {
             public void onResponse(Call<Meeting> call, Response<Meeting> response) {
                 Log.d("API", "Spotkanie zaktualizowane na serwerze");
                     if (response.isSuccessful() && response.body() != null) {
-                        new Thread(() -> meetingDao.insertMeeting(response.body())).start();
+                        Meeting m = response.body();
+                        m.syncApiFields();
+                        new Thread(() -> meetingDao.insertMeeting(m)).start();
                     }
             }
 
@@ -129,20 +131,8 @@ public class MeetingRepository {
             @Override
             public void onResponse(Call<MeetingMembersResponse> call, Response<MeetingMembersResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<MeetingMember> memberIds = response.body().getMembers();
-                    
-                    FriendRepository.getInstance().getFriends(context, new FriendRepository.FriendsLoadListener() {
-                        @Override
-                        public void onSuccess(List<Friend> allFriends) {
-                            List<MeetingMember> members = new ArrayList<>(memberIds);
-                            if (listener != null) listener.onSuccess(members);
-                        }
-
-                        @Override
-                        public void onFailure(String errorMessage) {
-                            if (listener != null) listener.onFailure(errorMessage);
-                        }
-                    });
+                    List<MeetingMember> newMembers = response.body().getMembers();
+                    if (listener != null) listener.onSuccess(newMembers);
                 } else {
                     if (listener != null) listener.onFailure("Błąd serwera: " + response.code());
                 }
@@ -181,10 +171,6 @@ public class MeetingRepository {
                         Log.e("API", "Błąd połączenia", t);
                     }
                 });
-    }
-
-    public List<Meeting> getAllMeetings() {
-        return meetingDao.getAllMeetings();
     }
 
     public LiveData<List<Meeting>> getAllMeetingsLive() {

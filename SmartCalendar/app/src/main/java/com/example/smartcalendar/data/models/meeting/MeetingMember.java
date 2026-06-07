@@ -4,10 +4,12 @@ import com.google.gson.annotations.SerializedName;
 
 public class MeetingMember {
     @SerializedName("user_id")
-    private final int userId;
+    private int userId;
     
     @SerializedName("username")
-    private final String username;
+    private String username;
+
+    public MeetingMember() {}
 
     public MeetingMember(int id, String name) { 
         this.userId = id; 
@@ -18,5 +20,13 @@ public class MeetingMember {
 
     public int getUserId() {
         return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
