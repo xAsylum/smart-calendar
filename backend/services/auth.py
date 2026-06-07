@@ -53,3 +53,18 @@ def authenticate_user(username:str, password:str, session: Session = Depends(get
     if not user or not user.check_password(password=password):
         return False
     return True
+
+
+def verify_token(token: str, session: Session):
+    try:
+        payload = jwt.decode(token, secret, algorithms=[algorithm])
+        username = payload.get("sub")
+
+        if username is None:
+            return None
+
+        user = session.query(User).filter_by(username=username).first()
+        return user
+
+    except InvalidTokenError:
+        return None

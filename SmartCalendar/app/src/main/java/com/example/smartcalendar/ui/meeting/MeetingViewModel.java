@@ -17,10 +17,15 @@ import com.prolificinteractive.materialcalendarview.CalendarDay;
 import java.util.List;
 
 public class MeetingViewModel extends ViewModel {
+
     private final MutableLiveData<List<MeetingMember>> meetingMembers = new MutableLiveData<>();
 
     public LiveData<List<Meeting>> getAllMeetingsLive(Context context) {
         return MeetingRepository.getInstance(context).getAllMeetingsLive();
+    }
+
+    public void refreshMeetings(Context context) {
+        MeetingRepository.getInstance(context).fetchMeetingsFromServer(context);
     }
 
     public LiveData<Meeting> getMeetingLive(Context context, int id) {
@@ -40,12 +45,11 @@ public class MeetingViewModel extends ViewModel {
 
             @Override
             public void onFailure(String error) {
-                // Obsługa błędu
             }
         });
     }
 
-    public void updateMeeting(Context context, int id, String name, String address) {
+    public void updateMeeting(Context context, int id, String name, String address, Double latitude, Double longitude) {
         new Thread(() -> {
             MeetingRepository meetingRepo = MeetingRepository.getInstance(context);
             Meeting meeting = meetingRepo.getMeetingById(id);
@@ -55,6 +59,8 @@ public class MeetingViewModel extends ViewModel {
                     meeting.setLocation(new MeetingLocation());
                 }
                 meeting.getLocation().setAddress(address);
+                meeting.getLocation().setLatitude(latitude);
+                meeting.getLocation().setLongitude(longitude);
                 meeting.syncApiFields();
                 meetingRepo.updateMeeting(context, meeting);
             }

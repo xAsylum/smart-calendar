@@ -8,6 +8,7 @@ import com.example.smartcalendar.data.models.auth.LoginResponse;
 import com.example.smartcalendar.data.models.meeting.Meeting;
 import com.example.smartcalendar.data.models.meeting.MeetingListResponse;
 import com.example.smartcalendar.data.models.meeting.MeetingMembersResponse;
+import com.example.smartcalendar.data.models.meeting.TravelTimeResponse;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface MeetingApiService {
     @POST("auth/login")
@@ -72,4 +74,13 @@ public interface MeetingApiService {
 
     @DELETE("friends/requests/{friend_id}")
     Call<Void> cancelFriendRequest(@Header("Authorization") String token, @Path("friend_id") int friendId);
+
+    @GET("distance/travel-time")
+    Call<TravelTimeResponse> getTravelTime(
+            @Query("origin_lat") double originLat,
+            @Query("origin_lng") double originLng,
+            @Query("dest_lat") double destLat,
+            @Query("dest_lng") double destLng,
+            @Query("mode") String mode
+    );
 }

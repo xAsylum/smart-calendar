@@ -10,13 +10,11 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.smartcalendar.R;
 import com.example.smartcalendar.data.local.AppDatabase;
 import com.example.smartcalendar.data.local.TokenManager;
-import com.example.smartcalendar.data.repository.MeetingRepository;
 import com.example.smartcalendar.data.models.meeting.Meeting;
 import com.example.smartcalendar.databinding.FragmentCalendarBinding;
 import com.example.smartcalendar.ui.meeting.MeetingViewModel;
@@ -53,23 +51,33 @@ public class CalendarFragment extends Fragment {
         viewModel.getAllMeetingsLive(requireContext()).observe(getViewLifecycleOwner(), meetings -> {
             if (meetings != null) {
                 allMeetingsMap = groupMeetingsByDate(meetings);
-
                 updateCalendarDecorators(allMeetingsMap.keySet());
-
                 updateMeetingList(binding.customCalendarView.getSelectedDate());
             }
         });
 
+        viewModel.refreshMeetings(requireContext());
+
         binding.customCalendarView.setOnDateChangedListener((widget, date, selected) -> updateMeetingList(date));
 
         binding.buttonLogout.setOnClickListener(v -> {
-            new Thread(() -> AppDatabase.getInstance(requireContext()).clearAllTables()).start();
-            TokenManager.getInstance().deleteToken(requireContext());
-            Navigation.findNavController(view).navigate(R.id.action_SecondFragment_to_FirstFragment);
+            new Thread(() -> {
+                AppDatabase.getInstance(requireContext()).clearAllTables();
+                TokenManager.getInstance().deleteToken(requireContext());
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Navigation.findNavController(view).navigate(R.id.action_SecondFragment_to_FirstFragment);
+                    });
+                }
+            }).start();
         });
 
         binding.buttonFriends.setOnClickListener(v -> {
             Navigation.findNavController(view).navigate(R.id.action_CalendarFragment_to_FriendsFragment);
+        });
+
+        binding.buttonIncoming.setOnClickListener(v -> {
+            Navigation.findNavController(view).navigate(R.id.action_CalendarFragment_to_IncomingMeetingsFragment);
         });
 
         binding.fabAddMeeting.setOnClickListener(v -> {
@@ -84,6 +92,14 @@ public class CalendarFragment extends Fragment {
         });
 
         binding.customCalendarView.setSelectedDate(CalendarDay.today());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.refreshMeetings(requireContext());
+        }
     }
 
     private void setupRecyclerView() {

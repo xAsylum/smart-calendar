@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:padding="8dp"
     tools:context=".ui.calendar.CalendarFragment">
+
     <Button
         android:id="@+id/button_friends"
         style="@style/Widget.MaterialComponents.Button.TextButton"
@@ -15,6 +16,18 @@
         android:text="@string/friends"
         android:layout_marginTop="4dp"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button_incoming"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/incoming_meetings"
+        android:layout_marginTop="4dp"
+        android:textColor="@android:color/holo_blue_dark"
+        app:layout_constraintStart_toEndOf="@id/button_friends"
+        app:layout_constraintEnd_toStartOf="@id/button_logout"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button

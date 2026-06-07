@@ -17,8 +17,8 @@
             android:text="@string/meeting_management_manage"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:layout_marginBottom="24dp"
-            android:textColor="?attr/colorOnSurface" />
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="24dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
@@ -36,13 +36,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/meeting_management_adress"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_marginBottom="16dp">
-            <com.google.android.material.textfield.TextInputEditText
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_marginBottom="8dp">
+            <AutoCompleteTextView
                 android:id="@+id/et_edit_address"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:completionThreshold="3" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cb_online"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Online meeting"
+            android:layout_marginBottom="16dp" />
 
         <LinearLayout
             android:layout_width="match_parent"

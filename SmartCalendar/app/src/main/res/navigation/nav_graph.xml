@@ -27,9 +27,8 @@
 
         <action
             android:id="@+id/action_CalendarFragment_to_MeetingDetailFragment"
-            app:destination="@id/MeetingDetailFragment"
-            >
-        </action>
+            app:destination="@id/MeetingDetailFragment" />
+
         <action
             android:id="@+id/action_CalendarFragment_to_MeetingManagementFragment"
             app:destination="@id/MeetingManagementFragment" />
@@ -37,9 +36,11 @@
         <action
             android:id="@+id/action_CalendarFragment_to_FriendsFragment"
             app:destination="@id/FriendsFragment"/>
+
+        <action
+            android:id="@+id/action_CalendarFragment_to_IncomingMeetingsFragment"
+            app:destination="@id/IncomingMeetingsFragment" />
     </fragment>
-
-
 
     <fragment
         android:id="@+id/FriendsFragment"
@@ -52,14 +53,20 @@
         tools:layout="@layout/fragment_meeting_detail">
 
         <action
-
             android:id="@+id/action_MeetingDetailFragment_to_MeetingManagementFragment"
             app:destination="@id/MeetingManagementFragment">
         </action>
     </fragment>
+
     <fragment
         android:id="@+id/MeetingManagementFragment"
         android:name="com.example.smartcalendar.ui.meeting.MeetingManagementFragment"
         tools:layout="@layout/fragment_meeting_management">
     </fragment>
+
+    <fragment
+        android:id="@+id/IncomingMeetingsFragment"
+        android:name="com.example.smartcalendar.ui.meeting.IncomingMeetingsFragment"
+        android:label="Incoming Meetings"
+        tools:layout="@layout/fragment_incoming_meetings" />
 </navigation>

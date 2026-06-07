@@ -15,6 +15,7 @@ import androidx.navigation.Navigation;
 import com.example.smartcalendar.data.models.friend.Friend;
 import com.example.smartcalendar.data.models.meeting.Meeting;
 import com.example.smartcalendar.data.models.meeting.MeetingMember;
+import com.example.smartcalendar.data.models.photon.PhotonResponse;
 import com.example.smartcalendar.data.repository.FriendRepository;
 import com.example.smartcalendar.databinding.FragmentMeetingManagementBinding;
 import com.google.android.material.chip.Chip;
@@ -30,10 +31,11 @@ public class MeetingManagementFragment extends Fragment {
     private FragmentMeetingManagementBinding binding;
     private MeetingViewModel viewModel;
     private int meetingId;
-
     private Meeting currentMeeting;
     private List<MeetingMember> currentMembers = new ArrayList<>();
     private boolean isInitialLoad = true;
+    private Double selectedLat = null;
+    private Double selectedLon = null;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -48,7 +50,8 @@ public class MeetingManagementFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(MeetingViewModel.class);
         meetingId = getArguments().getInt("meeting_id");
 
-        // Obserwowanie podstawowych danych spotkania
+        setupAddressAutocomplete();
+
         viewModel.getMeetingLive(requireContext(), meetingId).observe(getViewLifecycleOwner(), meeting -> {
             if (meeting != null) {
                 currentMeeting = meeting;
@@ -56,23 +59,27 @@ public class MeetingManagementFragment extends Fragment {
             }
         });
 
-        // Obserwowanie członków ładowanych oddzielnie z API
-        viewModel.getMeetingMembersLive().observe(getViewLifecycleOwner(), members -> {
-            if (members != null) {
-                currentMembers = members;
-                updateMembersUI(members);
-            }
-        });
+        viewModel.getMeetingMembersLive().observe(getViewLifecycleOwner(), this::updateMembersUI);
 
-        // Inicjalne ładowanie członków
         viewModel.loadMeetingMembers(requireContext(), meetingId);
 
         binding.btnSaveChanges.setOnClickListener(v -> {
+            String address = binding.etEditAddress.getText().toString();
+            boolean isOnline = binding.cbOnline.isChecked();
+            
+            if (isOnline || address.isEmpty()) {
+                address = "Online";
+                selectedLat = null;
+                selectedLon = null;
+            }
+
             viewModel.updateMeeting(
                     requireContext(),
                     meetingId,
                     binding.etEditName.getText().toString(),
-                    binding.etEditAddress.getText().toString()
+                    address,
+                    selectedLat,
+                    selectedLon
             );
             Toast.makeText(getContext(), "Saved successfully!", Toast.LENGTH_SHORT).show();
             Navigation.findNavController(view).popBackStack();
@@ -89,13 +96,46 @@ public class MeetingManagementFragment extends Fragment {
         binding.btnAddMember.setOnClickListener(v -> {
             if (currentMeeting != null) showAddMemberDialog();
         });
+
+        binding.cbOnline.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                binding.etEditAddress.setEnabled(false);
+                binding.etEditAddress.setText("Online");
+            } else {
+                binding.etEditAddress.setEnabled(true);
+                if ("Online".equals(binding.etEditAddress.getText().toString())) {
+                    binding.etEditAddress.setText("");
+                }
+            }
+        });
+    }
+
+    private void setupAddressAutocomplete() {
+        PhotonAdapter adapter = new PhotonAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line);
+        binding.etEditAddress.setAdapter(adapter);
+        binding.etEditAddress.setOnItemClickListener((parent, view, position, id) -> {
+            PhotonResponse.Feature feature = adapter.getItem(position);
+            if (feature != null && feature.getGeometry() != null && feature.getGeometry().getCoordinates().size() >= 2) {
+                // Photon returns [lon, lat]
+                selectedLon = feature.getGeometry().getCoordinates().get(0);
+                selectedLat = feature.getGeometry().getCoordinates().get(1);
+            }
+        });
     }
 
     private void updateBasicUI(Meeting meeting) {
         if (isInitialLoad) {
             binding.etEditName.setText(meeting.getName());
             if (meeting.getLocation() != null) {
-                binding.etEditAddress.setText(meeting.getLocation().getAddress());
+                String address = meeting.getLocation().getAddress();
+                binding.etEditAddress.setText(address);
+                selectedLat = meeting.getLocation().getLatitude();
+                selectedLon = meeting.getLocation().getLongitude();
+                
+                if ("Online".equalsIgnoreCase(address)) {
+                    binding.cbOnline.setChecked(true);
+                    binding.etEditAddress.setEnabled(false);
+                }
             }
             isInitialLoad = false;
         }
@@ -113,6 +153,7 @@ public class MeetingManagementFragment extends Fragment {
     }
 
     private void updateMembersUI(List<MeetingMember> members) {
+        currentMembers = members;
         binding.cgMembers.removeAllViews();
         for (MeetingMember member : members) {
             addMemberChip(member);
@@ -141,11 +182,11 @@ public class MeetingManagementFragment extends Fragment {
                 }
 
                 new MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Zarządzaj uczestnikami")
+                        .setTitle("Manage users")
                         .setMultiChoiceItems(friendNames, checkedItems, (dialog, which, isChecked) -> {
                             checkedItems[which] = isChecked;
                         })
-                        .setPositiveButton("Aktualizuj", (dialog, which) -> {
+                        .setPositiveButton("Update", (dialog, which) -> {
                             List<Friend> selectedUsers = new ArrayList<>();
                             for (int i = 0; i < allFriends.size(); i++) {
                                 if (checkedItems[i]) {
@@ -154,7 +195,7 @@ public class MeetingManagementFragment extends Fragment {
                             }
                             viewModel.setMeetingMembers(requireContext(), meetingId, selectedUsers);
                         })
-                        .setNegativeButton("Anuluj", null)
+                        .setNegativeButton("Cancel", null)
                         .show();
             }
 

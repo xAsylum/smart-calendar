@@ -1,6 +1,7 @@
 package com.example.smartcalendar.ui.meeting;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,17 +14,22 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.smartcalendar.R;
-import com.example.smartcalendar.data.models.meeting.Meeting;
+import com.example.smartcalendar.data.local.TokenManager;
+import com.example.smartcalendar.data.models.chat.ChatMessage;
+import com.example.smartcalendar.data.network.ChatWebSocketManager;
+import com.example.smartcalendar.data.network.NetworkClient;
 import com.example.smartcalendar.databinding.FragmentMeetingDetailBinding;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class MeetingDetailFragment extends Fragment {
+public class MeetingDetailFragment extends Fragment implements ChatWebSocketManager.ChatCallback {
 
     private FragmentMeetingDetailBinding binding;
     private MeetingViewModel viewModel;
     private ChatAdapter chatAdapter;
     private int meetingId;
+    private ChatWebSocketManager chatWebSocketManager;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -60,18 +66,17 @@ public class MeetingDetailFragment extends Fragment {
                 } else {
                     binding.tvDetailLocation.setText("Brak lokalizacji");
                 }
-
-                chatAdapter.setMessages(meeting.getChatMessages());
-                if (!meeting.getChatMessages().isEmpty()) {
-                    binding.rvChat.scrollToPosition(meeting.getChatMessages().size() - 1);
-                }
             }
         });
+
+        setupWebSocket();
 
         binding.btnSend.setOnClickListener(v -> {
             String msgText = binding.etChatMessage.getText().toString().trim();
             if (!msgText.isEmpty()) {
-                //viewModel.addChatMessage(requireContext(), meetingId, "Me: " + msgText);
+                if (chatWebSocketManager != null) {
+                    chatWebSocketManager.sendMessage(msgText);
+                }
                 binding.etChatMessage.setText("");
             }
         });
@@ -84,9 +89,49 @@ public class MeetingDetailFragment extends Fragment {
         });
     }
 
+    private void setupWebSocket() {
+        String token = TokenManager.getInstance().getToken(requireContext());
+        if (token == null) return;
+
+        String wsUrl = NetworkClient.getWsUrl(meetingId, token);
+
+        chatWebSocketManager = new ChatWebSocketManager(this);
+        chatWebSocketManager.connect(wsUrl);
+    }
+
+    @Override
+    public void onHistoryReceived(List<ChatMessage> messages) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                chatAdapter.setMessages(messages);
+                if (!messages.isEmpty()) {
+                    binding.rvChat.scrollToPosition(messages.size() - 1);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onNewMessageReceived(ChatMessage message) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                chatAdapter.addMessage(message);
+                binding.rvChat.scrollToPosition(chatAdapter.getItemCount() - 1);
+            });
+        }
+    }
+
+    @Override
+    public void onError(String error) {
+        Log.e("MeetingDetailFragment", "WebSocket Error: " + error);
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (chatWebSocketManager != null) {
+            chatWebSocketManager.disconnect();
+        }
         binding = null;
     }
 }
