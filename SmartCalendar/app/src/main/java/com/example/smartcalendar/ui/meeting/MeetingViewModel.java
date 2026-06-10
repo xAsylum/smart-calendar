@@ -67,6 +67,10 @@ public class MeetingViewModel extends ViewModel {
         }).start();
     }
 
+    public void deleteMeeting(Context context, int id) {
+        MeetingRepository.getInstance(context).deleteMeeting(context, id);
+    }
+
     public void setMeetingMembers(Context context, int meetingId, List<Friend> selectedUsers) {
         MeetingRepository.getInstance(context).setMeetingMembers(context, meetingId, selectedUsers, () -> {
             loadMeetingMembers(context, meetingId);

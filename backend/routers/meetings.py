@@ -1,4 +1,5 @@
 import json
+import os
 from enum import member
 from typing import List
 
@@ -126,6 +127,30 @@ def update_meeting(meeting_id: int,
     session.commit()
     session.refresh(meeting)
     return meeting
+
+
+@router.delete('/{meeting_id}')
+def delete_meeting(meeting_id: int,
+                   user: User = Depends(get_current_user),
+                   session: Session = Depends(get_db)):
+    meeting = (session.query(Meeting)
+                  .filter_by(id=meeting_id)
+                  .first())
+    if not meeting or meeting.owner != user.id:
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN,
+                            detail="You can't edit the meeting you are not the owner of!")
+
+    session.delete(meeting)
+    session.commit()
+
+    chat_path = 'chat_data'
+    messages_path = os.path.join(chat_path, f"meeting_{meeting_id}.json")
+
+    if os.path.isfile(messages_path):
+        os.remove(messages_path)
+
+    return {"message": "Meeting deleted successfully!"}
+
 
 
 @router.post('/{meeting_id}/members')

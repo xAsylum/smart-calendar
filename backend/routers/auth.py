@@ -23,7 +23,8 @@ async def login(login_data : LoginRequestSchema, session: Session = Depends(get_
         headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(login_data.username)
-    return TokenSchema(access_token=access_token, token_type='bearer')
+    user = get_user(login_data.username, session)
+    return TokenSchema(access_token=access_token, token_type='bearer', user_id = user.id)
 
 
 @router.post("/register")
@@ -38,4 +39,5 @@ async def register(register_data: RegisterRequestSchema, session: Session = Depe
     session.add(new_account)
     session.commit()
     access_token = create_access_token(register_data.username)
-    return TokenSchema(access_token=access_token, token_type='bearer')
+    user = get_user(register_data.username, session)
+    return TokenSchema(access_token=access_token, token_type='bearer', user_id = user.id)

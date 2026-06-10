@@ -20,6 +20,7 @@ import com.example.smartcalendar.databinding.FragmentCalendarBinding;
 import com.example.smartcalendar.ui.meeting.MeetingViewModel;
 import com.example.smartcalendar.ui.calendar.decorators.MeetingDecorator;
 import com.example.smartcalendar.ui.meeting.MeetingAdapter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 
 import java.util.ArrayList;
@@ -103,11 +104,26 @@ public class CalendarFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        adapter = new MeetingAdapter(currentDisplayedMeetings, meeting -> {
-            Bundle bundle = new Bundle();
-            bundle.putInt("meeting_id", meeting.getId());
-            Navigation.findNavController(requireView()).navigate(R.id.action_CalendarFragment_to_MeetingDetailFragment, bundle);
-        });
+        int currentUserId = TokenManager.getInstance().getUserId(requireContext());
+        adapter = new MeetingAdapter(
+                currentDisplayedMeetings, 
+                currentUserId, 
+                meeting -> {
+                    Bundle bundle = new Bundle();
+                    bundle.putInt("meeting_id", meeting.getId());
+                    Navigation.findNavController(requireView()).navigate(R.id.action_CalendarFragment_to_MeetingDetailFragment, bundle);
+                }, 
+                meeting -> {
+                    new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Delete Meeting")
+                            .setMessage("Are you sure you want to delete this meeting?")
+                            .setPositiveButton("Delete", (dialog, which) -> {
+                                viewModel.deleteMeeting(requireContext(), meeting.getId());
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                }
+        );
         binding.rvMeetings.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.rvMeetings.setAdapter(adapter);
     }

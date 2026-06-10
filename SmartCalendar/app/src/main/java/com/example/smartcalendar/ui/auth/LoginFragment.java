@@ -74,7 +74,9 @@ public class LoginFragment extends Fragment {
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     String token = response.body().getAccessToken();
+                    int userId = response.body().getUserId();
                     TokenManager.getInstance().saveToken(getContext(), token);
+                    TokenManager.getInstance().saveUserId(getContext(), userId);
                     Toast.makeText(getContext(), "Login successful!", Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(LoginFragment.this)
                             .navigate(R.id.action_FirstFragment_to_SecondFragment);
@@ -97,7 +99,9 @@ public class LoginFragment extends Fragment {
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     String token = response.body().getAccessToken();
+                    int userId = response.body().getUserId();
                     TokenManager.getInstance().saveToken(getContext(), token);
+                    TokenManager.getInstance().saveUserId(getContext(), userId);
                     Toast.makeText(getContext(), "Login successful!", Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(LoginFragment.this)
                             .navigate(R.id.action_FirstFragment_to_SecondFragment);

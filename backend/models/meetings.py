@@ -24,7 +24,11 @@ class Meeting(Base):
 
     location = relationship("MeetingLocation",
                             uselist=False,
-                            back_populates="meeting")
+                            back_populates="meeting",
+                            cascade="all, delete-orphan")
+
+    meeting_members = relationship("MeetingMembers",
+                                   cascade="all, delete-orphan")
 
 
 class MeetingLocation(Base):
@@ -50,7 +54,7 @@ class MeetingLocation(Base):
 class MeetingMembers(Base):
     __tablename__ = 'meetings_members'
     meeting_id = Column(Integer,
-                        ForeignKey(Meeting.id),
+                        ForeignKey(Meeting.id, ondelete="CASCADE"),
                         primary_key=True)
 
     member_id = Column(Integer,

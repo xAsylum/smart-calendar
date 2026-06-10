@@ -7,6 +7,7 @@ import com.example.smartcalendar.data.models.auth.LoginRequest;
 import com.example.smartcalendar.data.models.auth.LoginResponse;
 import com.example.smartcalendar.data.models.meeting.Meeting;
 import com.example.smartcalendar.data.models.meeting.MeetingListResponse;
+import com.example.smartcalendar.data.models.meeting.MeetingMember;
 import com.example.smartcalendar.data.models.meeting.MeetingMembersResponse;
 import com.example.smartcalendar.data.models.meeting.TravelTimeResponse;
 
@@ -39,6 +40,12 @@ public interface MeetingApiService {
             @Header("Authorization") String token,
             @Path("meeting_id") int id,
             @Body Meeting meeting
+    );
+
+    @DELETE("meetings/{meeting_id}")
+    Call<Void> deleteMeeting(
+            @Header("Authorization") String token,
+            @Path("meeting_id") int id
     );
 
     @GET("meetings/{meeting_id}/members")

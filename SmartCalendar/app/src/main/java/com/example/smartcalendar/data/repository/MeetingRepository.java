@@ -59,7 +59,7 @@ public class MeetingRepository {
                     new Thread(() -> {
                         meetingDao.deleteAllMeetings();
                         for (Meeting m : meetings) {
-                            m.syncApiFields(); // Ensure latitude/longitude are synced from location object
+                            m.syncApiFields();
                             meetingDao.insertMeeting(m);
                         }
                     }).start();
@@ -119,6 +119,30 @@ public class MeetingRepository {
             @Override
             public void onFailure(Call<Meeting> call, Throwable t) {
                 Log.e("API", "Błąd aktualizacji na serwerze", t);
+            }
+        });
+    }
+
+    public void deleteMeeting(Context context, int meetingId) {
+        String header = getAuthHeader(context);
+        if (header == null) return;
+
+        NetworkClient.getApiService().deleteMeeting(header, meetingId).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    new Thread(() -> {
+                        Meeting m = meetingDao.getMeetingById(meetingId);
+                        if (m != null) {
+                            meetingDao.delete(m);
+                        }
+                    }).start();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("API", "Błąd usuwania spotkania", t);
             }
         });
     }
